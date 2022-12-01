@@ -1,3 +1,5 @@
+using System.Collections;
+
 namespace AdventOfCode2022;
 
 public class Day01
@@ -27,15 +29,51 @@ public class Day01
 
         return max;
     }
+
+    public static long MaxCaloriesOfThree(string input)
+    {
+        var lines = input.Split(Environment.NewLine);
+
+        var max = new long[3];
+        var current = 0L;
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var line = lines[index];
+            
+            if (!string.IsNullOrEmpty(line))
+            {
+                current += long.Parse(line);
+                if (index < lines.Length - 1)
+                {
+                    continue;
+                }
+            }
+
+            for (var j = 2; j >= 0; j--)
+            {
+                if (max[j] < current)
+                {
+                    for (var k = 0; k < j; k++)
+                    {
+                        max[k] = max[k + 1];
+                    }
+
+                    max[j] = current;
+                    break;
+                }
+            }
+
+            current = 0;
+        }
+
+        return max.Sum();
+    }
 }
 
 [TestFixture]
 public class Day01Tests
 {
-    [Test]
-    public void Part1Example()
-    {
-        var input = @"1000
+    private readonly string example = @"1000
 2000
 3000
 
@@ -49,8 +87,11 @@ public class Day01Tests
 9000
 
 10000";
-
-        var maxCalories = Day01.MaxCalories(input);
+    
+    [Test]
+    public void Part1Example()
+    {
+        var maxCalories = Day01.MaxCalories(example);
 
         maxCalories.Should().Be(24000L);
     }
@@ -64,4 +105,23 @@ public class Day01Tests
 
         maxCalories.Should().Be(69310L);
     }
+
+    [Test]
+    public void Part2Example()
+    {
+        var maxCalories = Day01.MaxCaloriesOfThree(example);
+
+        maxCalories.Should().Be(45000L);
+    }
+    
+    [Test]
+    public void Part2Input()
+    {
+        var input = File.ReadAllText("Data/Day01.txt");
+        
+        var maxCalories = Day01.MaxCaloriesOfThree(input);
+
+        maxCalories.Should().Be(206104L);
+    }
+
 }
