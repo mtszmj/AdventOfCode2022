@@ -1,8 +1,12 @@
-using System.Collections;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Running;
 
 namespace AdventOfCode2022;
 
-public class Day01
+public static class Day01
 {
     public static long MaxCalories(string input)
     {
@@ -30,6 +34,29 @@ public class Day01
         return max;
     }
 
+    public static long MaxCaloriesOfThreeLinq(string input)
+    {
+        var caleriesByElf = new List<long>();
+
+        var totalCaleriesByElf = 0L;
+
+        foreach (var cal in input.Split(Environment.NewLine))
+        {
+            if (cal != String.Empty)
+            {
+                totalCaleriesByElf += long.Parse(cal);
+            }
+            else
+            {
+                caleriesByElf.Add(totalCaleriesByElf);
+                totalCaleriesByElf = 0L;
+                continue;
+            }
+        }
+
+        return caleriesByElf.OrderByDescending(x => x).Take(3).Sum();
+    }
+    
     public static long MaxCaloriesOfThree(string input)
     {
         var lines = input.Split(Environment.NewLine);
@@ -71,6 +98,20 @@ public class Day01
 }
 
 [TestFixture]
+public class Day1Benchmark
+{
+    [Test]
+    public void Run()
+    {
+        var opt = DefaultConfig.Instance
+            .AddDiagnoser(MemoryDiagnoser.Default)
+            .WithOption(ConfigOptions.DisableOptimizationsValidator, true);
+        var summary = BenchmarkRunner.Run(typeof(Day01Tests), opt);
+    }
+}
+
+[TestFixture]
+[SimpleJob(RuntimeMoniker.Net70)]
 public class Day01Tests
 {
     private readonly string example = @"1000
@@ -115,12 +156,24 @@ public class Day01Tests
     }
     
     [Test]
+    [Benchmark]
     public void Part2Input()
     {
         var input = File.ReadAllText("Data/Day01.txt");
         
         var maxCalories = Day01.MaxCaloriesOfThree(input);
 
+        maxCalories.Should().Be(206104L);
+    }
+    
+    [Test]
+    [Benchmark]
+    public void Part2InputLinq()
+    {
+        var input = File.ReadAllText("Data/Day01.txt");
+        
+        var maxCalories = Day01.MaxCaloriesOfThreeLinq(input);
+    
         maxCalories.Should().Be(206104L);
     }
 
