@@ -1,8 +1,8 @@
 namespace AdventOfCode2022;
 
-public static class Day02
+public class Day02
 {
-    public static int Calculate(string input)
+    public int Calculate(string input)
     {
         return input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
             .Select(x => (enemy: x[0], me: x[2]))
@@ -10,7 +10,7 @@ public static class Day02
             .Sum();
     }
 
-    public static int SelectionResult((char enemy, char me) rps)
+    public virtual int SelectionResult((char enemy, char me) rps)
     {
         return rps.me switch
         {
@@ -21,7 +21,7 @@ public static class Day02
         };
     }
     
-    public static int MatchResult((char enemy, char me) rps)
+    public virtual int MatchResult((char enemy, char me) rps)
     {
         return rps switch
         {
@@ -49,7 +49,7 @@ C Z";
     [Test]
     public void Part1Example()
     {
-        var result = Day02.Calculate(_example);
+        var result = new Day02().Calculate(_example);
 
         result.Should().Be(15);
     }
@@ -59,8 +59,8 @@ C Z";
     {
         var input = File.ReadAllText("Data/Day02.txt");
 
-        var result = Day02.Calculate(input);
+        var result =  new Day02().Calculate(input);
 
-        result.Should().Be(15);
+        result.Should().Be(12586);
     }
 }
