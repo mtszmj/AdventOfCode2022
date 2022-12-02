@@ -100,6 +100,7 @@ public static class Day01
 [TestFixture]
 public class Day1Benchmark
 {
+    [Ignore("Benchmark")]
     [Test]
     public void Run()
     {
