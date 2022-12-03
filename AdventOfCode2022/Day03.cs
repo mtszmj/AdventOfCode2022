@@ -12,21 +12,9 @@ public class Day03Part1
 
     public char GetItemFromBothCompartments(string rucksack)
     {
-        var left = new HashSet<char>();
-        var right = new HashSet<char>();
-        for (var index = 0; index < rucksack.Length / 2; index++)
-        {
-            var l = rucksack[index];
-            var r = rucksack[rucksack.Length - 1 - index];
-            left.Add(l);
-            right.Add(r);
-            if (left.Contains(r))
-                return r;
-            if (right.Contains(l))
-                return l;
-        }
-
-        throw new InvalidOperationException();
+        return rucksack.Substring(0, rucksack.Length / 2)
+            .Intersect(rucksack.Substring(rucksack.Length / 2))
+            .First();
     }
 
     public int ValueItem(char item)
@@ -46,13 +34,7 @@ public class Day03Part2 : Day03Part1
     {
         return input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
             .Chunk(3)
-            .Select(x =>
-            {
-                var hs = new HashSet<char>(x[0]);
-                hs.IntersectWith(new HashSet<char>(x[1]));
-                hs.IntersectWith(new HashSet<char>(x[2]));
-                return hs.ToList()[0];
-            })
+            .Select(x => x[0].Intersect(x[1]).Intersect(x[2]).First())
             .Sum(ValueItem);
     }
 }
