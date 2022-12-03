@@ -1,6 +1,6 @@
 namespace AdventOfCode2022;
 
-public class Day03
+public class Day03Part1
 {
     public int Prioritize(string input)
     {
@@ -40,6 +40,23 @@ public class Day03
     }
 }
 
+public class Day03Part2 : Day03Part1
+{
+    public int Prioritize3(string input)
+    {
+        return input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .Chunk(3)
+            .Select(x =>
+            {
+                var hs = new HashSet<char>(x[0]);
+                hs.IntersectWith(new HashSet<char>(x[1]));
+                hs.IntersectWith(new HashSet<char>(x[2]));
+                return hs.ToList()[0];
+            })
+            .Sum(ValueItem);
+    }
+}
+
 [TestFixture]
 public class Day03Tests
 {
@@ -53,7 +70,7 @@ CrZsJsPPZsGzwwsLwLmpwMDw";
     [Test]
     public void Part1Example()
     {
-        var result = new Day03().Prioritize(_example);
+        var result = new Day03Part1().Prioritize(_example);
 
         result.Should().Be(157);
     }
@@ -66,7 +83,7 @@ CrZsJsPPZsGzwwsLwLmpwMDw";
     [TestCase('Z', 52)]
     public void ValueItemTest(char item, int value)
     {
-        new Day03().ValueItem(item).Should().Be(value);
+        new Day03Part1().ValueItem(item).Should().Be(value);
     }
 
     
@@ -78,14 +95,30 @@ CrZsJsPPZsGzwwsLwLmpwMDw";
     [TestCase("CrZsJsPPZsGzwwsLwLmpwMDw", 's')]
     public void GetItemFromBothCompartmentsTest(string rucksack, char item)
     {
-        new Day03().GetItemFromBothCompartments(rucksack).Should().Be(item);
+        new Day03Part1().GetItemFromBothCompartments(rucksack).Should().Be(item);
     }
 
     [Test]
     public void Part1Input()
     {
-        var result = new Day03().Prioritize(Helper.ReadDay(3));
+        var result = new Day03Part1().Prioritize(Helper.ReadDay(3));
 
-        result.Should().Be(0);
+        result.Should().Be(8252);
+    }
+
+    [Test]
+    public void Part2Example()
+    {
+        var result = new Day03Part2().Prioritize3(_example);
+
+        result.Should().Be(70);
+    }
+
+    [Test]
+    public void Part2Input()
+    {
+        var result = new Day03Part2().Prioritize3(Helper.ReadDay(3));
+
+        result.Should().Be(2828);
     }
 }
