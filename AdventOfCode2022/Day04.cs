@@ -2,20 +2,39 @@ namespace AdventOfCode2022;
 
 public class Day04
 {
-    public int CountInner(string example)
+    public int Part1(string input)
     {
-        return example.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+        return GetValues(input).Where(IsInner).Count();
+    }
+
+    public int Part2(string input)
+    {
+        return GetValues(input).Where(AreOverlapping).Count();
+    }
+
+    private bool AreOverlapping((int l1, int l2, int r1, int r2) arg)
+    {
+        return IsInner(arg)
+               || (arg.l1 <= arg.r1 && arg.l2 >= arg.r1)
+               || (arg.l1 <= arg.r2 && arg.l2 >= arg.r2)
+               ;
+    }
+
+    private bool IsInner((int l1, int l2, int r1, int r2) arg)
+    {
+        return (arg.l1 <= arg.r1 && arg.l2 >= arg.r2
+                || arg.r1 <= arg.l1 && arg.r2 >= arg.l2);
+    }
+
+    public IEnumerable<(int l1, int l2, int r1, int r2)> GetValues(string input)
+    {
+        return input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
             .Select(line =>
             {
                 var parts = line.Split(',').SelectMany(parts => parts.Split('-'))
                     .Select(int.Parse).ToArray();
-                var (l1,l2,r1,r2) = (parts[0], parts[1], parts[2], parts[3]);
-                if (l1 <= r1 && l2 >= r2
-                    || r1 <= l1 && r2 >= l2)
-                    return 1;
-                
-                return 0;
-            }).Sum();
+                return (parts[0], parts[1], parts[2], parts[3]);
+            });
     }
 }
 
@@ -32,24 +51,28 @@ public class Day04Tests
     [Test]
     public void Part1Example()
     {
-        var innerCount = new Day04().CountInner(_example);
+        var innerCount = new Day04().Part1(_example);
         innerCount.Should().Be(2);
     }
     
     [Test]
     public void Part1Input()
     {
-        var innerCount = new Day04().CountInner(Helper.ReadDay(4));
+        var innerCount = new Day04().Part1(Helper.ReadDay(4));
         innerCount.Should().Be(542);
     }
     
+    [Test]
     public void Part2Example()
     {
-        Assert.Fail();
+        var innerCount = new Day04().Part2(_example);
+        innerCount.Should().Be(4);
     }
-    
+
+    [Test]
     public void Part2Input()
     {
-        Assert.Fail();
+        var innerCount = new Day04().Part2(Helper.ReadDay(4));
+        innerCount.Should().Be(900);
     }
 }
