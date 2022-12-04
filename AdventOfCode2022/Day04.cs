@@ -4,19 +4,18 @@ public class Day04
 {
     public int Part1(string input)
     {
-        return GetValues(input).Where(IsInner).Count();
+        return GetValues(input).Count(IsInner);
     }
 
     public int Part2(string input)
     {
-        return GetValues(input).Where(AreOverlapping).Count();
+        return GetValues(input).Count(AreOverlapping);
     }
 
     private bool AreOverlapping((int l1, int l2, int r1, int r2) arg)
     {
-        return IsInner(arg)
-               || (arg.l1 <= arg.r1 && arg.l2 >= arg.r1)
-               || (arg.l1 <= arg.r2 && arg.l2 >= arg.r2)
+        return arg.l1 <= arg.r2 
+               && arg.l2 >= arg.r1
                ;
     }
 
