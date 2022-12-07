@@ -5,18 +5,29 @@ namespace AdventOfCode2022;
 
 public class Day05
 {
-    public string Solve(string input)
+    public string SolvePart1(string input)
     {
         var inputParts = input.Split($"{Environment.NewLine}{Environment.NewLine}");
 
-        var cargo = ParseCrates(inputParts[0]);
+        var cargo = ParseCrates<Cargo>(inputParts[0]);
+        var commands = ParseCommands(inputParts[1]);
+
+        cargo.ApplyCommands(commands);
+        return cargo.GetTops();
+    }
+    
+    public string SolvePart2(string input)
+    {
+        var inputParts = input.Split($"{Environment.NewLine}{Environment.NewLine}");
+
+        var cargo = ParseCrates<Cargo2>(inputParts[0]);
         var commands = ParseCommands(inputParts[1]);
 
         cargo.ApplyCommands(commands);
         return cargo.GetTops();
     }
 
-    public Cargo ParseCrates(string inputPart)
+    public Cargo ParseCrates<T>(string inputPart) where T : Cargo, new()
     {
         var lines = inputPart.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
         var stackIndexes = new List<int>();
@@ -28,7 +39,8 @@ public class Day05
             i++;
         }
 
-        var cargo = new Cargo(stackIndexes.Count);
+        var cargo = new T();
+        cargo.Init(stackIndexes.Count);
 
         for (var i = lines.Length - 2; i >= 0; i--)
         {
@@ -59,9 +71,27 @@ public class Day05
     }
 }
 
+public class Cargo2 : Cargo
+{
+    public override void ApplyCommand(Command cmd)
+    {
+        var crateMover = new Stack<char>();
+
+        for (var i = 0; i < cmd.Count; i++)
+        {
+            crateMover.Push(Take(cmd.From));
+        }
+
+        while(crateMover.Any())
+        {
+            Add(cmd.To, crateMover.Pop());
+        }
+    }
+}
+
 public class Cargo
 {
-    public Cargo(int stacks)
+    public void Init(int stacks)
     {
         Stacks = new Stack<char>[stacks];
         for (var i = 0; i < stacks; i++)
@@ -71,7 +101,7 @@ public class Cargo
     private Stack<char>[] Stacks { get; set; }
 
     public void Add(int stack, char value) => Stacks[stack-1].Push(value);
-    private char Take(int stack) => Stacks[stack-1].Pop();
+    protected char Take(int stack) => Stacks[stack-1].Pop();
 
     public void ApplyCommands(IEnumerable<Command> cmds)
     {
@@ -79,7 +109,7 @@ public class Cargo
             ApplyCommand(cmd);
     }
     
-    public void ApplyCommand(Command cmd)
+    public virtual void ApplyCommand(Command cmd)
     {
         for(var i = 0; i < cmd.Count; i++)
             Add(cmd.To, Take(cmd.From));
@@ -118,7 +148,7 @@ move 1 from 1 to 2";
     [Test]
     public void Part1Example()
     {
-        var result = new Day05().Solve(_example);
+        var result = new Day05().SolvePart1(_example);
 
         result.Should().Be("CMZ");
     }
@@ -126,7 +156,7 @@ move 1 from 1 to 2";
     [Test]
     public void Part1Input()
     {
-        var result = new Day05().Solve(Helper.ReadDay(5));
+        var result = new Day05().SolvePart1(Helper.ReadDay(5));
 
         result.Should().Be("NTWZZWHFV");
     }
@@ -155,11 +185,26 @@ move 1 from 1 to 2";
 [Z] [M] [P]
  1   2   3 ";
 
-        var cargo = new Day05().ParseCrates(commandInput);
+        var cargo = new Day05().ParseCrates<Cargo>(commandInput);
 
         cargo.GetTopToBottom(1).Should().Be("NZ");
         cargo.GetTopToBottom(2).Should().Be("DCM");
         cargo.GetTopToBottom(3).Should().Be("P");
     }
 
+    [Test]
+    public void Part2Example()
+    {
+        var result = new Day05().SolvePart2(_example);
+
+        result.Should().Be("MCD");       
+    }
+
+    [Test]
+    public void Part2Input()
+    {
+        var result = new Day05().SolvePart2(Helper.ReadDay(5));
+
+        result.Should().Be("BRZGFVBTJ");
+    }
 }
