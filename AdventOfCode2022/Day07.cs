@@ -15,6 +15,16 @@ public class Day07
         var sum = fs.SumDirsBelowTotalSize(100000);
         return sum;
     }
+    
+    public long SolvePart2(string input)
+    {
+        var commands = ParseCommands(input);
+        var fs = new FileSystem();
+        foreach (var command in commands) fs.ApplyCommand(command);
+
+        var min = fs.FindMinAboveValue(70000000, 30000000);
+        return min;
+    }
 
     public List<ICommand> ParseCommands(string input)
     {
@@ -116,6 +126,26 @@ public class FileSystem
         }
 
         return result;
+    }
+    
+    public long FindMinAboveValue(long totalSize, long required)
+    {
+        var occupied = _root.TotalSize();
+        var free = totalSize - occupied;
+        var searched = required - free;
+        
+        var min = totalSize;
+        var dirs = GetAllDirs();
+        foreach (var dir in dirs)
+        {
+            var ts = dir.TotalSize();
+            if (ts < min && ts > searched)
+            {
+                min = ts;
+            }
+        }
+
+        return min;
     }
 
     public IEnumerable<Directory> GetAllDirs()
@@ -315,5 +345,17 @@ $ ls
     public void Part1Input()
     {
         new Day07().SolvePart1(Helper.ReadDay(7)).Should().Be(1182909L);
+    }
+    
+    [Test]
+    public void Part2Example()
+    {
+        new Day07().SolvePart2(_example).Should().Be(24933642);
+    }
+    
+    [Test]
+    public void Part2Input()
+    {
+        new Day07().SolvePart2(Helper.ReadDay(7)).Should().Be(2832508L);
     }
 }
