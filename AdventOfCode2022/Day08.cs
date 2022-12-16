@@ -79,7 +79,7 @@ public class Day08
             }
         }
 
-        Print(trees, isVisible);
+        // Print(trees, isVisible);
 
         return isVisible.Select(x => x).SelectMany(x => x).Count(x => x);
     }
