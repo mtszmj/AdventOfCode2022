@@ -1,27 +1,73 @@
+using System.Text;
+
 namespace AdventOfCode2022;
 
 public class Day10
 {
     public int Part1(string input, Func<int,int> multiplier, params int[] cycles)
     {
-        var cycle = 1;
-        var registerValues = new List<(int, int)> {(1, 1)};
-        var lastValue = (cycle: 1, value: 1);
+        var registerValues = new Dictionary<int, int> { [1] = 1 };
+        var last = 1;
         foreach (var line in input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Split(" ")))
         {
-            lastValue = line[0] switch
+            switch (line[0])
             {
-                "noop" => lastValue with { cycle = lastValue.cycle + 1 },
-                "addx" => (lastValue.cycle + 2, lastValue.value + int.Parse(line[1]))
-            };
-            registerValues.Add(lastValue);
+                case "noop":
+                    registerValues[last + 1] = registerValues[last];
+                    last++;
+                    break;
+                case "addx":
+                    registerValues[last + 1] = registerValues[last];
+                    registerValues[last + 2] = registerValues[last] + int.Parse(line[1]);
+                    last += 2;
+                    break;
+            }
         }
 
-        return cycles.Select(x => GetValueAtCycle(x) * multiplier(x)).Sum();
+        return cycles.Select(x => GetValueAtCycle(x, registerValues) * multiplier(x)).Sum();
+    }
 
-        int GetValueAtCycle(int c)
+    private int GetValueAtCycle(int c, Dictionary<int, int> registerValues)
+    {
+        return registerValues[c];
+    }
+    
+    public void Part2(string input)
+    {
+        var registerValues = new Dictionary<int, int> { [1] = 1 };
+        var last = 1;
+        foreach (var line in input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Split(" ")))
         {
-            return registerValues.TakeWhile(x => x.Item1 <= c).Last().Item2;
+            switch (line[0])
+            {
+                case "noop":
+                    registerValues[last + 1] = registerValues[last];
+                    last++;
+                    break;
+                case "addx":
+                    registerValues[last + 1] = registerValues[last];
+                    registerValues[last + 2] = registerValues[last] + int.Parse(line[1]);
+                    last += 2;
+                    break;
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (var cycle = 1; cycle <= 240; cycle++)
+        {
+            var position = (cycle - 1) % 40;
+            var spriteMiddle = registerValues[cycle];
+            if (spriteMiddle - 1 <= position && spriteMiddle + 1 >= position)
+                sb.Append("■");
+            else
+                sb.Append(" ");
+        }
+
+        for (var i = 0; i < sb.Length; i++)
+        {
+            if (i % 40 == 0)
+                Console.WriteLine();
+            Console.Write(sb[i]);
         }
     }
 }
@@ -29,6 +75,19 @@ public class Day10
 [TestFixture]
 public class Day10Tests
 {
+    [Test]
+    public void Part2Example()
+    {
+        var day = new Day10();
+        day.Part2(_example2);
+    }
+
+    [Test]
+    public void Part2Input()
+    {
+        new Day10().Part2(Helper.ReadDay(10));
+    }
+    
     [Test]
     public void Part1Example1()
     {
