@@ -4,7 +4,7 @@ namespace AdventOfCode2022;
 
 public class Day13
 {
-    public long SumRight(string input)
+    public long Part1(string input)
     {
         var index = 1;
         var sum = 0L;
@@ -17,6 +17,21 @@ public class Day13
         }
 
         return sum;
+    }
+
+    public long Part2(string input)
+    {
+        var list = new List<IElement>();
+        var first = Parse("[[2]]");
+        var second = Parse("[[6]]");
+        list.Add(first);
+        list.Add(second);
+        foreach (var line in input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
+            list.Add(Parse(line));
+
+        list.Sort(Compare);
+
+        return (list.IndexOf(first) + 1) * (list.IndexOf(second) + 1);
     }
     
     public bool Compare(string left, string right)
@@ -240,15 +255,28 @@ public class Day13Tests
     [Test]
     public void Part1Example()
     {
-        new Day13().SumRight(Example).Should().Be(13);
+        new Day13().Part1(Example).Should().Be(13);
     }
-    
+
     [Test]
     public void Part1Input()
     {
-        new Day13().SumRight(Helper.ReadDay(13)).Should().Be(6086);
+        new Day13().Part1(Helper.ReadDay(13)).Should().Be(6086);
     }
-    
+
+    [Test]
+    public void Part2Example()
+    {
+        new Day13().Part2(Example).Should().Be(140);
+    }
+
+    [Test]
+    public void Part2Input()
+    {
+        new Day13().Part2(Helper.ReadDay(13)).Should().Be(27930);
+    }
+
+
     private const string Example = @"[1,1,3,1,1]
 [1,1,5,1,1]
 
