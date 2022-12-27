@@ -53,6 +53,70 @@ public class Day14
         return sand - 1;
     }
 
+    public int Part2(string input, bool withPrint = false)
+    {
+        var mapPoints = FillMap(input);
+        var minCol = mapPoints.MinBy(x => x.Col).Col;
+        var maxCol = mapPoints.MaxBy(x => x.Col).Col;
+        var minRow = mapPoints.MinBy(x => x.Row).Row;
+        var maxRow = mapPoints.MaxBy(x => x.Row).Row + 2;
+
+        var mapCopy = new HashSet<(int Col, int Row)>(mapPoints);
+
+        Print(mapPoints, mapCopy, withPrint);
+        
+        var sand = 1;
+        var sandPos = (Col: 500, Row: 0);
+        while (true)
+        {
+            if (sandPos.Row == maxRow - 1)
+            {
+                //rest
+                mapPoints.Add(sandPos);
+
+                //next sand unit
+                if (withPrint)
+                    Console.WriteLine($"Unit: {sand}");
+                Print(mapPoints, mapCopy, withPrint);
+                sand++;
+                sandPos = (Col: 500, Row: 0);
+            }
+            else if (!mapPoints.Contains((sandPos.Col, sandPos.Row + 1)))
+            {
+                sandPos = (sandPos.Col, sandPos.Row + 1);
+            }
+            else if (!mapPoints.Contains((sandPos.Col - 1, sandPos.Row + 1)))
+            {
+                sandPos = (sandPos.Col - 1, sandPos.Row + 1);
+            }
+            else if (!mapPoints.Contains((sandPos.Col + 1, sandPos.Row + 1)))
+            {
+                sandPos = (sandPos.Col + 1, sandPos.Row + 1);
+            }
+            else if (sandPos == (500, 0))
+            {
+                mapPoints.Add(sandPos);
+                if(withPrint)
+                    Console.WriteLine($"Unit: {sand}");
+                Print(mapPoints, mapCopy, withPrint);
+                break;
+            }
+            else //rest
+            {
+                mapPoints.Add(sandPos);
+                
+                //next sand unit
+                if(withPrint)
+                    Console.WriteLine($"Unit: {sand}");
+                Print(mapPoints, mapCopy, withPrint);
+                sand++;
+                sandPos = (Col: 500, Row: 0);
+            }
+        }
+
+        return sand;
+    }
+
     private void Print(HashSet<(int Col, int Row)> mapPoints, HashSet<(int Col, int Row)> mapCopy, bool withPrint)
     {
         if (!withPrint)
@@ -75,25 +139,18 @@ public class Day14
                 }
                 if (mapCopy.Contains((col, row)))
                 {
-                    // Console.ForegroundColor = ConsoleColor.White;
-                    // Console.Write('#');
                     sb.Append('#');
                 }
                 else if (mapPoints.Contains((col, row)))
                 {
-                    // Console.ForegroundColor = ConsoleColor.Yellow;
-                    // Console.Write('o');
                     sb.Append('o');
                 }
                 else
                 {
-                    // Console.ForegroundColor = ConsoleColor.Gray;
-                    // Console.Write('.');
                     sb.Append('.');
                 }
             }
 
-            // Console.WriteLine();
             sb.AppendLine();
         }
 
@@ -152,5 +209,17 @@ public class Day14Tests
     public void Part1Input()
     {
         new Day14().Part1(Helper.ReadDay(14), false).Should().Be(901);
+    }
+    
+    [Test]
+    public void Part2Example()
+    {
+        new Day14().Part2(Example, true).Should().Be(93);
+    }
+    
+    [Test]
+    public void Part2Input()
+    {
+        new Day14().Part2(Helper.ReadDay(14), false).Should().Be(93);
     }
 }
