@@ -220,6 +220,6 @@ public class Day14Tests
     [Test]
     public void Part2Input()
     {
-        new Day14().Part2(Helper.ReadDay(14), false).Should().Be(93);
+        new Day14().Part2(Helper.ReadDay(14), false).Should().Be(24589);
     }
 }
