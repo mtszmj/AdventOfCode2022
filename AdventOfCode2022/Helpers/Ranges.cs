@@ -106,6 +106,11 @@ public class Ranges
             return new SingleRange(Math.Min(a.From, b.From), Math.Max(a.To, b.To));
         }
     }
+
+    public Ranges Intersect(SingleRange singleRange)
+    {
+        return this;
+    }
 }
 
 public record SingleRange
@@ -136,64 +141,64 @@ public class RangesTests
         [Test]
         public void UnionTestEmpty()
         {
-            var r = new Ranges();
-            var ranges = r.Union(new SingleRange(15, 20));
+            var ranges = new Ranges();
+            ranges.Union(new SingleRange(15, 20));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 15, 16, 17, 18, 19, 20 });
         }
 
         [Test]
         public void UnionTestBefore()
         {
-            var r = new Ranges((5, 10));
-            var ranges = r.Union(new SingleRange(0, 1));
+            var ranges = new Ranges((5, 10));
+            ranges.Union(new SingleRange(0, 1));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 0, 1, 5, 6, 7, 8, 9, 10 });
         }
 
         [Test]
         public void UnionTestAfter()
         {
-            var r = new Ranges((5, 10));
-            var ranges = r.Union(new SingleRange(13, 14));
+            var ranges = new Ranges((5, 10));
+            ranges.Union(new SingleRange(13, 14));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 7, 8, 9, 10, 13, 14 });
         }
 
         [Test]
         public void UnionTestInner()
         {
-            var r = new Ranges((5, 10));
-            var ranges = r.Union(new SingleRange(6, 7));
+            var ranges = new Ranges((5, 10));
+            ranges.Union(new SingleRange(6, 7));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 7, 8, 9, 10 });
         }
 
         [Test]
         public void UnionTestInner2()
         {
-            var r = new Ranges((5, 10));
-            var ranges = r.Union(new SingleRange(4, 11));
+            var ranges = new Ranges((5, 10));
+            ranges.Union(new SingleRange(4, 11));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 4, 5, 6, 7, 8, 9, 10, 11 });
         }
 
         [Test]
         public void UnionTestMerge()
         {
-            var r = new Ranges((5, 10));
-            var ranges = r.Union(new SingleRange(6, 15));
+            var ranges = new Ranges((5, 10));
+            ranges.Union(new SingleRange(6, 15));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
         }
 
         [Test]
         public void UnionTestMerge2()
         {
-            var r = new Ranges((5, 10));
-            var ranges = r.Union(new SingleRange(10, 15));
+            var ranges = new Ranges((5, 10));
+            ranges.Union(new SingleRange(10, 15));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
         }
 
         [Test]
         public void UnionTestOuter()
         {
-            var r = new Ranges((5, 10));
-            var ranges = r.Union(new SingleRange(15, 20));
+            var ranges = new Ranges((5, 10));
+            ranges.Union(new SingleRange(15, 20));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 7, 8, 9, 10, 15, 16, 17, 18, 19, 20 });
         }
     }
@@ -204,56 +209,56 @@ public class RangesTests
         [Test]
         public void UnionMiddle()
         {
-            var r = new Ranges((5, 10), (15, 16));
-            var ranges = r.Union(new SingleRange(12, 13));
+            var ranges = new Ranges((5, 10), (15, 16));
+            ranges.Union(new SingleRange(12, 13));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 7, 8, 9, 10, 12, 13, 15, 16 });
         }
         
         [Test]
         public void UnionOuter()
         {
-            var r = new Ranges((5, 7), (9, 10));
-            var ranges = r.Union(new SingleRange(3, 13));
+            var ranges = new Ranges((5, 7), (9, 10));
+            ranges.Union(new SingleRange(3, 13));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13});
         }
         
         [Test]
         public void UnionSingleMergeFirstLeft()
         {
-            var r = new Ranges((5, 7), (9, 10));
-            var ranges = r.Union(new SingleRange(3, 6));
+            var ranges = new Ranges((5, 7), (9, 10));
+            ranges.Union(new SingleRange(3, 6));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 3, 4, 5, 6, 7, 9, 10});
         }
         
         [Test]
         public void UnionSingleMergeFirstRight()
         {
-            var r = new Ranges((5, 7), (10, 11));
-            var ranges = r.Union(new SingleRange(6, 8));
+            var ranges = new Ranges((5, 7), (10, 11));
+            ranges.Union(new SingleRange(6, 8));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 7, 8, 10, 11});
         }
         
         [Test]
         public void UnionSingleMergeSecondLeft()
         {
-            var r = new Ranges((5, 6), (9, 11));
-            var ranges = r.Union(new SingleRange(8, 10));
+            var ranges = new Ranges((5, 6), (9, 11));
+            ranges.Union(new SingleRange(8, 10));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 8, 9, 10, 11});
         }
         
         [Test]
         public void UnionSingleMergeSecondRight()
         {
-            var r = new Ranges((5, 7), (10, 11));
-            var ranges = r.Union(new SingleRange(11, 13));
+            var ranges = new Ranges((5, 7), (10, 11));
+            ranges.Union(new SingleRange(11, 13));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 7, 10, 11, 12, 13});
         }
         
         [Test]
         public void UnionMultipleMerge()
         {
-            var r = new Ranges((5, 7), (10, 11), (13, 14), (16, 17), (20, 22));
-            var ranges = r.Union(new SingleRange(9, 16));
+            var ranges = new Ranges((5, 7), (10, 11), (13, 14), (16, 17), (20, 22));
+            ranges.Union(new SingleRange(9, 16));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22});
         }
     }
@@ -272,12 +277,70 @@ public class RangesTests
     public class UnionInConstructor
     {
         [Test]
-        public void Test()
+        public void UnionConstr()
         {
             var ranges = new Ranges((10, 5), (-2, 1), (6, 7), (15, 17), (10, 11), (14, 18), (21, 23), (22, 20));
-
             ranges.Iterate().Should().BeEquivalentTo(new[]
                 { -2, -1, 0, 1, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 20, 21, 22, 23 });
+        }
+    }
+
+    public class IntersectOneToOne
+    {
+        [Test]
+        public void IntersectEmptyRangesToAny()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(15, 20));
+            ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
+        }
+        
+        [Test]
+        public void IntersectNonOverlapping()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(15, 20));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,8,9,10 });
+        }
+        
+        [Test]
+        public void IntersectInner()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(6,7));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,8,9,10 });
+        }
+        
+        [Test]
+        public void IntersectOuter()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(2,17));
+            ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
+        }
+        
+        [Test]
+        public void IntersectEqual()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(5,10));
+            ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
+        }
+        
+        [Test]
+        public void IntersectLeft()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(3,7));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {8,9,10});
+        }
+        
+        [Test]
+        public void IntersectRight()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(7, 11));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {5,6});
         }
     }
 }
