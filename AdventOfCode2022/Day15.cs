@@ -14,9 +14,9 @@ public class Day15
             );
     }
 
-    public int Part1(string example, int row)
+    public int Part1(string input, int row)
     {
-        var sensors = example.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+        var sensors = input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
             .Select(ParseLine);
         
         var coveredRange = sensors
@@ -32,6 +32,38 @@ public class Day15
         var beaconsAtRow = sensors.Where(x => x.BeaconY == row).Select(x => x.BeaconX).ToHashSet();
 
         return coveredRange.Except(beaconsAtRow).Count();
+    }
+
+    public int Part2(string input, int min, int max)
+    {
+        var sensors = input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .Select(ParseLine);
+
+        for(var row = min; row <= max; row++)
+        {
+            var coveredRange = sensors
+                    .Select(x => x.RangeAtRowMinMax(row, min, max))
+                    .Aggregate(new HashSet<int>(),
+                        (hs, x) =>
+                        {
+                            hs.UnionWith(x);
+                            return hs;
+                        })
+                ;
+
+            if (coveredRange.Count < max - min + 1)
+            {
+                var col = Enumerable.Range(min, max - min + 1).Except(coveredRange).First();
+                return row  + col* 4000000;
+            }
+
+            if (row % 100000 == 0)
+            {
+                Console.WriteLine($"Row: {row}");
+            }
+        }
+
+        throw new InvalidOperationException();
     }
 }
 
@@ -61,6 +93,22 @@ public class Sensor
 
         var diff = signalStrength - distance;
         return Enumerable.Range(X - diff, 2 * diff + 1);
+    }
+    
+    public IEnumerable<int> RangeAtRowMinMax(int row, int min, int max)
+    {
+        var distance = Math.Abs(row - Y);
+        var signalStrength = BeaconDistance();
+        if (distance > signalStrength)
+            return Enumerable.Empty<int>();
+
+        var diff = signalStrength - distance;
+        var from = X - diff;
+        var count = 2 * diff + 1;
+        var to = from + count - 1;
+        var fromMin = from < min ? min : from;
+        var toMax = to > max ? max : to;
+        return Enumerable.Range(fromMin, toMax - fromMin + 1);
     }
 }
 
@@ -127,5 +175,17 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3";
     public void Part1Input()
     {
         new Day15().Part1(Helper.ReadDay(15), 2000000).Should().Be(5716881);
+    }
+
+    [Test]
+    public void Part2Example()
+    {
+        new Day15().Part2(Example, 0, 20).Should().Be(56000011);
+    }
+
+    [Test]
+    public void Part2Input()
+    {
+        new Day15().Part2(Helper.ReadDay(15), 0, 4000000).Should().Be(56000011);
     }
 }
