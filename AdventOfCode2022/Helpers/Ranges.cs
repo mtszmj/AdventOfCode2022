@@ -50,10 +50,10 @@ public class Ranges
             var withMerged = false;
             for (var i = _ranges.Count - 1; i >= 0; i--)
             {
-                if (!withMerged && IsLower(with, i))
+                if (!withMerged && IsALowerThanB(with, _ranges[i]))
                     continue;
 
-                if (!withMerged && IsHigher(with, i))
+                if (!withMerged && IsAHigherThanB(with, _ranges[i]))
                 {
                     _ranges.Insert(i+1, with);
                     break;
@@ -75,41 +75,107 @@ public class Ranges
         }
 
         return this;
-
-        bool IsEmpty()
+        
+        SingleRange MergeOverlapping(SingleRange a, SingleRange b)
         {
-            return !_ranges.Any();
+            return new SingleRange(Math.Min(a.From, b.From), Math.Max(a.To, b.To));
+        }
+    }
+    
+    public Ranges Except(Ranges with)
+    {
+        foreach (var single in with._ranges)
+        {
+            Except(single);
         }
 
-        bool IsLowestNonOverlapping(SingleRange singleRange)
-        {
-            return singleRange.To < _ranges[0].From;
-        }
+        return this;
+    }
 
-        bool IsHighestNonOverlapping(SingleRange with1)
+    public Ranges Except(SingleRange with)
+    {
+        if (IsEmpty() || IsHighestNonOverlapping(with) || IsLowestNonOverlapping(with))
+            return this;
+        
+        for (var i = _ranges.Count - 1; i >= 0; i--)
         {
-            return with1.From > _ranges[^1].To;
+            var current = _ranges[i];
+            if (IsALowerThanB(with, current))
+                continue;
+            if (IsAHigherThanB(with, current))
+                break;
+            if (DoesAContainB(with, current))
+            {
+                _ranges.RemoveAt(i);
+                continue;
+            }
+            if (DoesAContainB(current, with))
+            {
+                if (with.To < current.To && with.From > current.From)
+                {
+                    _ranges.Insert(i+1, new SingleRange(with.To + 1, current.To));
+                    _ranges[i] = new SingleRange(current.From, with.From - 1);
+                }
+                else if (with.To == current.To)
+                {
+                    _ranges[i] = new SingleRange(current.From, with.From - 1);
+                }
+                else
+                {
+                    _ranges[i] = new SingleRange(with.To + 1, current.To);
+                } 
+            }
+            else if (with.From > current.From)
+            {
+                _ranges[i] = new SingleRange(current.From, with.From - 1);
+            }
+            else if (with.To < current.To)
+            {
+                _ranges[i] = new SingleRange(current.To, with.To + 1);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
         }
-
-        bool IsLower(SingleRange singleRange1, int i)
-        {
-            return _ranges[i].From > singleRange1.To;
-        }
-
-        bool IsHigher(SingleRange with2, int i)
-        {
-            return _ranges[i].To < with2.From;
-        }
-
+        
+        return this;
+        
+        
         SingleRange MergeOverlapping(SingleRange a, SingleRange b)
         {
             return new SingleRange(Math.Min(a.From, b.From), Math.Max(a.To, b.To));
         }
     }
 
-    public Ranges Intersect(SingleRange singleRange)
+    private bool IsEmpty()
     {
-        return this;
+        return !_ranges.Any();
+    }
+
+    private bool IsLowestNonOverlapping(SingleRange check)
+    {
+        return check.To < _ranges[0].From;
+    }
+
+    private bool IsHighestNonOverlapping(SingleRange check)
+    {
+        return check.From > _ranges[^1].To;
+    }
+
+    private bool IsALowerThanB(SingleRange a, SingleRange b)
+    {
+        return a.To < b.From;
+    }
+
+    private bool IsAHigherThanB(SingleRange a, SingleRange b)
+    {
+        return a.From > b.To;
+    }
+
+    private bool DoesAContainB(SingleRange a, SingleRange b)
+    {
+        return a.From <= b.From && a.To >= b.To;
     }
 }
 
@@ -285,64 +351,184 @@ public class RangesTests
         }
     }
 
-    public class IntersectOneToOne
+    public class ExceptOneToOne
     {
         [Test]
-        public void IntersectEmptyRangesToAny()
+        public void ExceptEmptyRangesToAny()
         {
-            var ranges = new Ranges((5, 10));
-            ranges.Intersect(new SingleRange(15, 20));
+            var ranges = new Ranges();
+            ranges.Except(new SingleRange(15, 20));
             ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
         }
         
         [Test]
-        public void IntersectNonOverlapping()
+        public void ExceptNonOverlapping()
         {
             var ranges = new Ranges((5, 10));
-            ranges.Intersect(new SingleRange(15, 20));
+            ranges.Except(new SingleRange(15, 20));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,8,9,10 });
         }
         
         [Test]
-        public void IntersectInner()
+        public void ExceptInner()
         {
             var ranges = new Ranges((5, 10));
-            ranges.Intersect(new SingleRange(6,7));
+            ranges.Except(new SingleRange(6,7));
             ranges.Iterate().Should().BeEquivalentTo(new[] { 5,8,9,10 });
         }
         
         [Test]
-        public void IntersectOuter()
+        public void ExceptOuter()
         {
             var ranges = new Ranges((5, 10));
-            ranges.Intersect(new SingleRange(2,17));
+            ranges.Except(new SingleRange(2,17));
             ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
         }
         
         [Test]
-        public void IntersectEqual()
+        public void ExceptEqual()
         {
             var ranges = new Ranges((5, 10));
-            ranges.Intersect(new SingleRange(5,10));
+            ranges.Except(new SingleRange(5,10));
             ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
         }
         
         [Test]
-        public void IntersectLeft()
+        public void ExceptLeft()
         {
             var ranges = new Ranges((5, 10));
-            ranges.Intersect(new SingleRange(3,7));
+            ranges.Except(new SingleRange(3,7));
             ranges.Iterate().Should().BeEquivalentTo(new [] {8,9,10});
         }
         
         [Test]
-        public void IntersectRight()
+        public void ExceptRight()
         {
             var ranges = new Ranges((5, 10));
-            ranges.Intersect(new SingleRange(7, 11));
+            ranges.Except(new SingleRange(7, 11));
             ranges.Iterate().Should().BeEquivalentTo(new [] {5,6});
         }
     }
+
+    public class ExceptManyToOne
+    {
+        [Test]
+        public void ExceptNonOverlappingLeft()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(0, 3));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,8,15,16,17,18 });
+        }
+        
+        [Test]
+        public void ExceptNonOverlappingRight()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(20, 23));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,8,15,16,17,18 });
+        }
+        
+        [Test]
+        public void ExceptNonOverlappingMiddle()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(10, 13));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,8,15,16,17,18 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingFirstLeft()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(3, 6));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 7,8,15,16,17,18 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingFirstRight()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(7, 10));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,15,16,17,18 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingFirstInside()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(6, 7));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,8,15,16,17,18 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingFirstOutside()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(3, 9));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 15,16,17,18 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingSecondLeft()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(13, 16));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,8,17,18 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingSecondRight()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(17, 20));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,8,15,16 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingSecondInside()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(16, 17));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,8,15,18 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingSecondOutside()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(13, 19));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,8 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingBoth()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(8, 15));
+            ranges.Iterate().Should().BeEquivalentTo(new[] { 5,6,7,16,17,18 });
+        }
+        
+        [Test]
+        public void ExceptOverlappingBothTotally()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Except(new SingleRange(0, 25));
+            ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
+        }
+    }
+    
+    public class ExceptRangeToRange
+    {
+        
+        [Test]
+        public void ExceptTest1()
+        {
+            var r1 = new Ranges((5, 10), (15, 20), (25, 30));
+            var r2 = new Ranges((5,7), (10, 16), (22, 23), (25,25), (28,29), (31,33));
+            r1.Except(r2).Iterate().Should().BeEquivalentTo(new [] {8, 9, 17, 18, 19, 20, 26, 27, 30});
+        }
+    }
+
 }
 
 [TestFixture]
