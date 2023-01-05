@@ -1,3 +1,5 @@
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+
 namespace AdventOfCode2022.Helpers;
 
 public class Ranges
@@ -148,6 +150,85 @@ public class Ranges
         }
     }
 
+    public Ranges Intersect(Ranges with)
+    {
+        var tempRanges = new List<SingleRange>();
+        foreach (var single in with._ranges)
+        {
+            var ranges = IntersectWithoutChangingInnerState(single);
+            tempRanges.AddRange(ranges);
+        }
+        
+        _ranges.Clear();
+        _ranges.AddRange(tempRanges);
+        return this;
+    }
+
+    public Ranges Intersect(SingleRange with)
+    {
+        var ranges = IntersectWithoutChangingInnerState(with);
+        _ranges.Clear();
+        _ranges.AddRange(ranges);
+        return this;
+    }
+    
+    private List<SingleRange> IntersectWithoutChangingInnerState(SingleRange with)
+    {
+        if (IsEmpty())
+            return new List<SingleRange>();
+
+        var tempRanges = _ranges.Select(x => x.Copy()).ToList();
+        if (IsLowestNonOverlapping(with) || IsHighestNonOverlapping(with))
+        {
+            tempRanges.Clear();
+            return tempRanges;
+        }
+
+        for (var i = tempRanges.Count - 1; i >= 0; i--)
+        {
+            var current = tempRanges[i];
+            if (IsALowerThanB(with, current))
+            {
+                tempRanges.RemoveAt(i);
+                continue;
+            }
+            if (IsAHigherThanB(with, current))
+            {
+                tempRanges.RemoveRange(0, i + 1);
+                break;
+            }
+            if (DoesAContainB(with, current))
+            {
+                continue;
+            }
+            if (DoesAContainB(current, with))
+            {
+                tempRanges.Clear();
+                tempRanges.Add(new SingleRange(with.From, with.To));
+                break;
+            }
+            if (with.From > current.From)
+            {
+                tempRanges[i] = IntersectOverlapping(current, with);
+            }
+            else if (with.To < current.To)
+            {
+                tempRanges[i] = IntersectOverlapping(current, with);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+        }
+
+        return tempRanges;
+        
+        SingleRange IntersectOverlapping(SingleRange a, SingleRange b)
+        {
+            return new SingleRange(Math.Max(a.From, b.From), Math.Min(a.To, b.To));
+        }
+    }
+
     private bool IsEmpty()
     {
         return !_ranges.Any();
@@ -197,6 +278,8 @@ public record SingleRange
 
     public int From { get; }
     public int To { get; }
+
+    public SingleRange Copy() => new SingleRange(From, To);
 }
 
 [TestFixture]
@@ -529,6 +612,183 @@ public class RangesTests
         }
     }
 
+    public class IntersectOneToOne
+    {
+        
+        [Test]
+        public void IntersectNonOverlappingLower()
+        {
+            var ranges = new Ranges((5, 8));
+            ranges.Intersect(new SingleRange(0, 3));
+            ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
+        }
+        
+        [Test]
+        public void IntersectNonOverlappingHigher()
+        {
+            var ranges = new Ranges((5, 8));
+            ranges.Intersect(new SingleRange(20, 25));
+            ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
+        }
+        
+        [Test]
+        public void IntersectOverlappingLeft()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(4, 8));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {5,6,7,8});
+        }
+        
+        [Test]
+        public void IntersectOverlappingRight()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(7, 12));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {7,8,9,10});
+        }
+        
+        [Test]
+        public void IntersectOverlappingInner()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(7, 8));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {7, 8});
+        }
+        
+        [Test]
+        public void IntersectOverlappingOuter()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(4, 18));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {5,6,7, 8,9,10});
+        }
+        
+        [Test]
+        public void IntersectEqual()
+        {
+            var ranges = new Ranges((5, 10));
+            ranges.Intersect(new SingleRange(5, 10));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {5,6,7, 8,9,10});
+        }
+    }
+    public class IntersectManyToOne
+    {
+        [Test]
+        public void IntersectNonOverlappingLower()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(0, 3));
+            ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
+        }
+        
+        [Test]
+        public void IntersectNonOverlappingHigher()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(20, 25));
+            ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
+        }
+        
+        [Test]
+        public void IntersectNonOverlappingMiddle()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(10, 13));
+            ranges.Iterate().Should().BeEquivalentTo(Array.Empty<int>());
+        }
+        
+        
+        [Test]
+        public void IntersectOverlappingFirstLeft()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(0, 7));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {5,6,7});
+        }
+        
+        [Test]
+        public void IntersectOverlappingFirstRight()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(7, 10));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {7,8});
+        }
+        
+        [Test]
+        public void IntersectOverlappingFirstInner()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(6, 7));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {6,7});
+        }
+        
+        [Test]
+        public void IntersectOverlappingFirstOuter()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(0, 13));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {5,6,7,8});
+        }
+        
+        [Test]
+        public void IntersectOverlappingFirstEqual()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(5, 8));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {5,6,7,8});
+        }
+        
+        [Test]
+        public void IntersectOverlappingSecondLeft()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(10, 17));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {15,16,17});
+        }
+        
+        [Test]
+        public void IntersectOverlappingSecondRight()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(17, 20));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {17,18});
+        }
+        
+        [Test]
+        public void IntersectOverlappingSecondInner()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(16, 17));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {16,17});
+        }
+        
+        [Test]
+        public void IntersectOverlappingSecondOuter()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(10, 23));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {15,16,17,18});
+        }
+        
+        [Test]
+        public void IntersectOverlappingSecondEqual()
+        {
+            var ranges = new Ranges((5, 8), (15, 18));
+            ranges.Intersect(new SingleRange(15, 18));
+            ranges.Iterate().Should().BeEquivalentTo(new [] {15,16,17,18});
+        }
+    }
+    
+    public class IntersectRangeToRange
+    {
+        [Test]
+        public void IntersectTest1()
+        {
+            var r1 = new Ranges((5, 10), (15, 20), (25, 30));
+            var r2 = new Ranges((5,7), (10, 16), (22, 23), (25,25), (28,29), (31,33));
+            r1.Intersect(r2).Iterate().Should().BeEquivalentTo(new [] {5,6,7,10,15,16,25,28,29});
+        }
+    }
 }
 
 [TestFixture]
