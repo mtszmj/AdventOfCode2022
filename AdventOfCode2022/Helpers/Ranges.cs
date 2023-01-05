@@ -16,6 +16,8 @@ public class Ranges
         }
     }
 
+    public int Count() => _ranges.Select(x => x.To - x.From + 1).Sum();
+
     public IEnumerable<int> Iterate()
     {
         foreach (var r in _ranges)

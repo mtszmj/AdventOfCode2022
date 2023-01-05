@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using AdventOfCode2022.Helpers;
 
 namespace AdventOfCode2022;
 
@@ -34,32 +35,35 @@ public class Day15
         return coveredRange.Except(beaconsAtRow).Count();
     }
 
-    public int Part2(string input, int min, int max)
+    public long Part2(string input, int min, int max)
     {
         var sensors = input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
-            .Select(ParseLine);
+            .Select(ParseLine).ToList();
 
         for(var row = min; row <= max; row++)
         {
-            var coveredRange = sensors
-                    .Select(x => x.RangeAtRowMinMax(row, min, max))
-                    .Aggregate(new HashSet<int>(),
-                        (hs, x) =>
-                        {
-                            hs.UnionWith(x);
-                            return hs;
-                        })
-                ;
-
-            if (coveredRange.Count < max - min + 1)
+            var rowRange = new Ranges();
+            foreach (var s in sensors)
             {
-                var col = Enumerable.Range(min, max - min + 1).Except(coveredRange).First();
-                return row  + col* 4000000;
+                var sensorRange = s.RangeAtRowMinMax(row, min, max);
+                rowRange.Union(sensorRange);
+            }
+            // var coveredRange = sensors
+            //         .Select(x => x.RangeAtRowMinMax(row, min, max))
+            //         .Aggregate(new Ranges(),
+            //             (acc, x) => acc.Union(x))
+            //     ;
+
+            if (rowRange.Count() < max - min + 1)
+            {
+                var r = new Ranges((min, max)).Except(rowRange);
+                var col = r.Iterate().First();
+                return row  + col * 4000000L;
             }
 
             if (row % 100000 == 0)
             {
-                Console.WriteLine($"Row: {row}");
+                Console.WriteLine($"[{DateTime.Now}] Row: {row}");
             }
         }
 
@@ -95,12 +99,12 @@ public class Sensor
         return Enumerable.Range(X - diff, 2 * diff + 1);
     }
     
-    public IEnumerable<int> RangeAtRowMinMax(int row, int min, int max)
+    public Ranges RangeAtRowMinMax(int row, int min, int max)
     {
         var distance = Math.Abs(row - Y);
         var signalStrength = BeaconDistance();
         if (distance > signalStrength)
-            return Enumerable.Empty<int>();
+            return new Ranges();
 
         var diff = signalStrength - distance;
         var from = X - diff;
@@ -108,7 +112,7 @@ public class Sensor
         var to = from + count - 1;
         var fromMin = from < min ? min : from;
         var toMax = to > max ? max : to;
-        return Enumerable.Range(fromMin, toMax - fromMin + 1);
+        return new Ranges((fromMin, toMax));
     }
 }
 
@@ -186,6 +190,6 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3";
     [Test]
     public void Part2Input()
     {
-        new Day15().Part2(Helper.ReadDay(15), 0, 4000000).Should().Be(56000011);
+        new Day15().Part2(Helper.ReadDay(15), 0, 4000000).Should().Be(10852583132904L);
     }
 }
